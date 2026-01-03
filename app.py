@@ -185,19 +185,19 @@ def app():
 # Login Page - Generates the Strava Auth URL
 def show_login_page():
 
-    st.session["current_user"] = st.secrets["CLIENT_ID"]
+    st.session_state["current_user"] = st.secrets["CLIENT_ID"]
 
     # Load existing tokens
     tokens = load_tokens()
 
     # Check if user is already in the tokens file
-    if st.session.current_user in tokens:
-        st.success(f"User {st.session.current_user} is already authenticated!")
-        st.session["tokens"] = tokens
+    if st.session_state.current_user in tokens:
+        st.success(f"User {st.session_state.current_user} is already authenticated!")
+        st.session_state["tokens"] = tokens
         st.query_params["page"] = "leaderboard"
     else:
-        st.write(f"User {st.session.current_user} is not found in tokens.")
-        st.write(f"Adding user {st.session.current_user} with token.")
+        st.write(f"User {st.session_state.current_user} is not found in tokens.")
+        st.write(f"Adding user {st.session_state.current_user} with token.")
         st.title('Login with Strava')
 
         # Display the authorization button
@@ -228,13 +228,13 @@ def handle_redirect_page():
             st.write(f"Your access token: {access_token}") 
 
             # Add the new token to the dictionary
-            st.session.tokens[st.session.current_user] = access_token
+            st.session_state.tokens[st.session_state.current_user] = access_token
 
             # Save the updated tokens to the file
-            save_tokens(st.session.tokens)
+            save_tokens(st.session_state.tokens)
 
             st.write("Updated tokens:")
-            st.json(st.session.tokens)
+            st.json(st.session_state.tokens)
 
         
             st.query_params["page"] = "leaderboard"
