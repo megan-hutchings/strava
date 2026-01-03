@@ -45,8 +45,8 @@ def generate_auth_url():
 def get_access_token(auth_code):
     token_url = 'https://www.strava.com/oauth/token'
     params = {
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET,
+        'client_id': st.secrets['CLIENT_ID'],
+        'client_secret': st.secrets['CLIENT_SECRET'],
         'code': auth_code,
         'grant_type': 'authorization_code'
     }
@@ -222,6 +222,7 @@ def handle_redirect_page():
 
         # Exchange the code for an access token
         access_token = get_access_token(auth_code)
+
         if access_token: 
             st.success("Successfully authenticated with Strava!")
             st.write(f"Your access token: {access_token}") 
