@@ -25,8 +25,10 @@ def load_tokens():
     try:
         with open(tokens_file, "r") as f:
             tokens = json.load(f)
+        st.write("found tokens file")
         return tokens
     except FileNotFoundError:
+        st.error("no tokens file found")
         return {}
     
 # Generate the authorization URL
@@ -41,6 +43,7 @@ def generate_auth_url():
     }
     print(base_url + '?' + urlencode(auth_params))
     return base_url + '?' + urlencode(auth_params)
+
 # Exchange the authorization code for an access token
 def get_access_token(auth_code):
     token_url = 'https://www.strava.com/oauth/token'
@@ -188,12 +191,12 @@ def show_login_page():
     st.session_state["current_user"] = st.secrets["CLIENT_ID"]
 
     # Load existing tokens
-    tokens = load_tokens()
+    st.session_state["tokens"] = load_tokens()
 
     # Check if user is already in the tokens file
-    if st.session_state.current_user in tokens:
+    if st.session_state.current_user in st.session_state.tokens:
         st.success(f"User {st.session_state.current_user} is already authenticated!")
-        st.session_state["tokens"] = tokens
+
         st.query_params["page"] = "leaderboard"
     else:
         st.write(f"User {st.session_state.current_user} is not found in tokens.")
