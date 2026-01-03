@@ -76,7 +76,6 @@ def refresh_access_token(refresh_token):
         return None, None
 
 
-
 def check_token_scopes(ACCESS_TOKEN):
     url = 'https://www.strava.com/api/v3/athlete'
     headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
@@ -93,7 +92,7 @@ def check_token_scopes(ACCESS_TOKEN):
 # Function to get user activities
 def get_user_activities(user_id,ACCESS_TOKEN):
     print("ACCESS_TOKEN",ACCESS_TOKEN)
-    print(user_id)
+    st.write(user_id)
 
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/activities'
     headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
@@ -211,7 +210,7 @@ def handle_redirect_page():
             st.title("Strava Leaderboard - Kilometers Run in Year") 
             leaderboard = {} 
             for user_name, user_id in users.items(): 
-                activities = get_user_stats(user_id,access_token) 
+                activities = get_user_activities(user_id,access_token) 
                 total_kms = calculate_total_kms(activities) 
                 leaderboard[user_name] = total_kms 
                 #  Sort leaderboard based on kilometers 
