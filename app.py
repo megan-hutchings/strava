@@ -231,7 +231,10 @@ def handle_redirect_page():
             st.write(f"Your access token: {access_token}") 
 
             # Add the new token to the dictionary
-            st.session_state.tokens[st.session_state.current_user] = access_token
+            if "tokens" in st.session_state:
+                st.session_state.tokens[st.session_state.current_user] = access_token
+            else:
+                st.session_state["tokens"] = json({st.session_state.current_user: access_token})
 
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
