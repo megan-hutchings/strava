@@ -7,8 +7,10 @@ from datetime import datetime
 
 
 # Replace these with your own values
-CLIENT_ID = '193409'
-CLIENT_SECRET = '750613ca746e6696293be34be9204b68b8a125c3'
+CLIENT_ID = st.secrets['CLIENT_ID']
+CLIENT_SECRET = st.secrets['CLIENT_SECRET']
+
+
 REDIRECT_URI = 'https://hutchings.streamlit.app/?page=redirect'  # Redirect URI to capture the cod                # Define the users (replace with actual Strava user IDs)
 CLUB_ID = 1895283                      
 
