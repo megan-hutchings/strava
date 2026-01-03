@@ -100,6 +100,22 @@ def check_token_scopes(ACCESS_TOKEN):
     else:
         print(f"Error verifying token: {response.json()}")
 
+def get_user_id(access_token):
+
+    url = "https://www.strava.com/api/v3/athlete"
+    headers = {'Authorization': f'Bearer {access_token}'}
+
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        # Successfully fetched the user data
+        user_data = response.json()
+        return user_data.get('id')  # Return the user_id
+    else:
+        st.error(f"Error fetching user data: {response.json()}")
+        return None
+
+
 # Function to get user activities
 def get_user_activities(user_id,ACCESS_TOKEN):
     print("ACCESS_TOKEN",ACCESS_TOKEN)
@@ -173,7 +189,6 @@ def display_leaderboard(leaderboard):
 
 # Main function for the Streamlit app
 def app():
-
     if "page" in st.query_params:
         if st.query_params["page"] == "login":
             show_login_page()
@@ -220,10 +235,6 @@ def handle_redirect_page():
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
 
-
-
-
-
     # Extract the authorization code from the query parameters
 
     print(st.query_params)
@@ -238,10 +249,11 @@ def handle_redirect_page():
         if access_token: 
             st.success("Successfully authenticated with Strava!")
             st.write(f"Your access token: {access_token}") 
+            user_id = get_user_id(access_token)
+            st.write(f"Your user_id: {user_id}")
 
             # Add the new token to the dictionary
-
-            st.session_state.tokens[st.session_state.current_user] = access_token
+            st.session_state.tokens[st.session_state.current_user] = json({"auth_token": access_token,"user_id": user_id})
 
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
@@ -257,8 +269,9 @@ def handle_redirect_page():
         st.warning("No authorization code found. Make sure to authorize first.")
 
 def handle_leaderboard_page():
+    # Load existing tokens
+    st.session_state["tokens"] = load_tokens()
 
-    access_token = "123"
 
     st.title("Strava Leaderboard - Kilometers Run in Year") 
     leaderboard = {} 
