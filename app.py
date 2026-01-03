@@ -4,21 +4,31 @@ import pandas as pd
 import numpy as np
 from urllib.parse import urlencode, urlparse, parse_qs
 from datetime import datetime
-
-
+import json
 # Replace these with your own values
 CLIENT_ID = st.secrets['CLIENT_ID']
 CLIENT_SECRET = st.secrets['CLIENT_SECRET']
+REDIRECT_URI = 'https://hutchings.streamlit.app/?page=redirect'  # Redirect URI to capture the cod                # Define the users (replace with actual Strava user IDs)                    
 
+tokens_file = "tokens.json"
 
-REDIRECT_URI = 'https://hutchings.streamlit.app/?page=redirect'  # Redirect URI to capture the cod                # Define the users (replace with actual Strava user IDs)
-CLUB_ID = 1895283                      
+def save_tokens(tokens):
+    with open(tokens_file, "w") as f:
+        json.dump(tokens, f, indent=4)
 
 users = {
     'Meg': 26785678,  # Replace with real Strava athlete ID
-    'Dina':67908097
+    'Dina': 67908097
 }
 
+def load_tokens():
+    try:
+        with open(tokens_file, "r") as f:
+            tokens = json.load(f)
+        return tokens
+    except FileNotFoundError:
+        return {}
+    
 # Generate the authorization URL
 def generate_auth_url():
     base_url = 'https://www.strava.com/oauth/authorize'
@@ -31,7 +41,6 @@ def generate_auth_url():
     }
     print(base_url + '?' + urlencode(auth_params))
     return base_url + '?' + urlencode(auth_params)
-
 # Exchange the authorization code for an access token
 def get_access_token(auth_code):
     token_url = 'https://www.strava.com/oauth/token'
@@ -111,7 +120,6 @@ def get_user_activities(user_id,ACCESS_TOKEN):
         st.error(f"Error fetching activities: {response.json()}")
         return []
     
-
 def get_user_stats(user_id, access_token):
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/stats'
     headers = {'Authorization': f'Bearer {access_token}'}
@@ -146,15 +154,12 @@ def get_club_activities(club_id, ACCESS_TOKEN, before=None, after=None, per_page
         print(f"Error fetching activities for club {club_id}: {response.json()}")
         return []
 
-
-
 def calculate_total_kms(activities):
     total_kms = 0
     for activity in activities:
         if activity['type'] == 'Run':  # Ensure only running activities are counted
             total_kms += activity['distance'] / 1000  # Distance is in meters, convert to kilometers
     return total_kms
-
 # Display leaderboard
 def display_leaderboard(leaderboard):
     sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
@@ -163,40 +168,56 @@ def display_leaderboard(leaderboard):
         st.write(f"{rank}. {user} - {total_kms:.2f} km")
 
 
-
 # Main function for the Streamlit app
 def app():
-    # Get the current page (login or redirect)
-    #page = st.experimental_get_query_params().get("page", ["login"])[0]
-    
+
     if "page" in st.query_params:
         if st.query_params["page"] == "login":
             show_login_page()
         elif st.query_params["page"] == "redirect":
             handle_redirect_page()
+        elif st.query_params["page"] == "leaderboard":
+            handle_leaderboard_page()
     else:
         show_login_page()
 
 
 # Login Page - Generates the Strava Auth URL
 def show_login_page():
-    st.title('Login with Strava')
 
-    # Display the authorization button
-    auth_url = generate_auth_url()
-    st.write("Click the button below to authorize with Strava:")
-    st.markdown(f"[Authorize with Strava]({auth_url})")
+    st.session["current_user"] = st.secrets["CLIENT_ID"]
 
-    st.info("After you authorize, you'll be redirected to this app with the authorization code.")
+    # Load existing tokens
+    tokens = load_tokens()
+
+    # Check if user is already in the tokens file
+    if st.session.current_user in tokens:
+        st.success(f"User {st.session.current_user} is already authenticated!")
+        st.session["tokens"] = tokens
+        st.query_params["page"] = "leaderboard"
+    else:
+        st.write(f"User {st.session.current_user} is not found in tokens.")
+        st.write(f"Adding user {st.session.current_user} with token.")
+        st.title('Login with Strava')
+
+        # Display the authorization button
+        auth_url = generate_auth_url()
+        st.write("Click the button below to authorize with Strava:")
+        st.markdown(f"[Authorize with Strava]({auth_url})")
+
+        st.info("After you authorize, you'll be redirected to this app with the authorization code.")
+
+
+
 
 # Redirect Page - Handles the redirection from Strava
 def handle_redirect_page():
     # Extract the authorization code from the query parameters
-    print("hello, checking params")
-    #query_params = st.experimental_get_query_params()
+
     print(st.query_params)
     if 'code' in st.query_params:
         auth_code = st.query_params['code']
+
         st.write(f"Authorization Code: {auth_code}")
 
         # Exchange the code for an access token
@@ -205,22 +226,39 @@ def handle_redirect_page():
             st.success("Successfully authenticated with Strava!")
             st.write(f"Your access token: {access_token}") 
 
-            st.title("Strava Leaderboard - Kilometers Run in Year") 
-            leaderboard = {} 
-            for user_name, user_id in users.items(): 
-                activities = get_user_activities(user_id,access_token) 
-                total_kms = calculate_total_kms(activities) 
-                leaderboard[user_name] = total_kms 
-                #  Sort leaderboard based on kilometers 
-                sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
-                # # Display the leaderboard 
-                st.subheader(f"Leaderboard for {datetime.now().year}") 
-                for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1): 
-                    st.write(f"{rank}. {user} - {total_kms:.2f} km") 
+            # Add the new token to the dictionary
+            st.session.tokens[st.session.current_user] = access_token
+
+            # Save the updated tokens to the file
+            save_tokens(st.session.tokens)
+
+            st.write("Updated tokens:")
+            st.json(st.session.tokens)
+
+        
+            st.query_params["page"] = "leaderboard"
         else: 
             st.error("Failed to obtain access token.")
     else:
         st.warning("No authorization code found. Make sure to authorize first.")
+
+def handle_leaderboard_page():
+
+    access_token = "123"
+
+    st.title("Strava Leaderboard - Kilometers Run in Year") 
+    leaderboard = {} 
+    for user_name, user_id in users.items(): 
+        activities = get_user_activities(user_id, access_token) 
+        total_kms = calculate_total_kms(activities) 
+        leaderboard[user_name] = total_kms 
+        #  Sort leaderboard based on kilometers 
+        sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
+        # # Display the leaderboard 
+        st.subheader(f"Leaderboard for {datetime.now().year}") 
+        for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1): 
+            st.write(f"{rank}. {user} - {total_kms:.2f} km") 
+
 
 # Run the app
 if __name__ == "__main__":
