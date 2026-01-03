@@ -6,14 +6,9 @@ from urllib.parse import urlencode, urlparse, parse_qs
 from datetime import datetime
 
 
-#streamlit run app.py --server.address localhost --server.port 8501
-#https://www.strava.com/oauth/authorize?client_id=193409&response_type=code&redirect_uri=http://localhost:8501&scope=read&state=mystate 
-#http://localhost:8501/?state=mystate&code=468da511f9df64134137c18c05892904a29f6d66&scope=read
-
 # Replace these with your own values
 CLIENT_ID = '193409'
 CLIENT_SECRET = '750613ca746e6696293be34be9204b68b8a125c3'
-#AUTHORIZATION_CODE = '468da511f9df64134137c18c05892904a29f6d66'  # From the URL
 REDIRECT_URI = 'https://hutchings.streamlit.app/?page=redirect'  # Redirect URI to capture the cod                # Define the users (replace with actual Strava user IDs)
 CLUB_ID = 1895283                      
 
@@ -101,9 +96,7 @@ def get_user_activities(user_id,ACCESS_TOKEN):
     print(user_id)
 
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/stats'
-    #url = f'https://www.strava.com/api/v3/athlete'
     headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
-    
     
     params = {
         'before': int(datetime(datetime.now().year, datetime.now().month, datetime.now().day).timestamp()),  # Activities from this year
@@ -159,38 +152,6 @@ def get_club_activities(club_id, ACCESS_TOKEN, before=None, after=None, per_page
 
 
 
-
-def get_user_followers(ACCESS_TOKEN):
-    # Get the authenticated user's id
-    url = 'https://www.strava.com/api/v3/athlete'
-    headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
-    
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        user_data = response.json()
-        user_id = user_data['id']  # This is the authenticated user's ID
-        print(f"Authenticated user ID: {user_id}")
-        
-        # Now, get the list of followers using the authenticated user's ID
-        followers_url = f'https://www.strava.com/api/v3/athletes/{user_id}/followers'
-        
-        followers_response = requests.get(followers_url, headers=headers)
-        
-        if followers_response.status_code == 200:
-            followers_data = followers_response.json()
-            # List of follower user IDs
-            follower_ids = [follower['id'] for follower in followers_data]
-            print(f"Follower IDs: {follower_ids}")
-            return follower_ids
-        else:
-            print(f"Error fetching followers: {followers_response.json()}")
-            return []
-    else:
-        print(f"Error fetching user data: {response.json()}")
-        return []
-
-
 def calculate_total_kms(activities):
     total_kms = 0
     for activity in activities:
@@ -244,23 +205,23 @@ def handle_redirect_page():
 
         # Exchange the code for an access token
         access_token = get_access_token(auth_code)
-        if access_token:
+        if access_token: 
             st.success("Successfully authenticated with Strava!")
-            
-            # Fetch activities for the club in 2026
-            activities = get_club_activities(CLUB_ID, access_token, 2026)
-            
-            # Calculate total kilometers for each athlete
-            leaderboard = {}
-            for activity in activities:
-                athlete_name = activity['athlete']['username']
-                if athlete_name not in leaderboard:
-                    leaderboard[athlete_name] = 0
-                leaderboard[athlete_name] += activity['distance'] / 1000  # Add kilometers
-            
-            # Display the leaderboard
-            display_leaderboard(leaderboard)
-        else:
+            st.write(f"Your access token: {access_token}") 
+
+            st.title("Strava Leaderboard - Kilometers Run in Year") 
+            leaderboard = {} 
+            for user_name, user_id in users.items(): 
+                activities = get_user_stats(user_id,access_token) 
+                total_kms = calculate_total_kms(activities) 
+                leaderboard[user_name] = total_kms 
+                #  Sort leaderboard based on kilometers 
+                sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
+                # # Display the leaderboard 
+                st.subheader(f"Leaderboard for {datetime.now().year}") 
+                for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1): 
+                    st.write(f"{rank}. {user} - {total_kms:.2f} km") 
+        else: 
             st.error("Failed to obtain access token.")
     else:
         st.warning("No authorization code found. Make sure to authorize first.")
