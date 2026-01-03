@@ -95,7 +95,7 @@ def get_user_activities(user_id,ACCESS_TOKEN):
     print("ACCESS_TOKEN",ACCESS_TOKEN)
     print(user_id)
 
-    url = f'https://www.strava.com/api/v3/athletes/{user_id}/stats'
+    url = f'https://www.strava.com/api/v3/athletes/{user_id}/activities'
     headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
     
     params = {
@@ -103,13 +103,12 @@ def get_user_activities(user_id,ACCESS_TOKEN):
         'after': int(datetime(datetime.now().year - 1, 12, 31).timestamp()),  # Activities up to the start of this year
         'per_page': 200  # Get up to 200 activities (you can adjust this as needed)
     }
+    
 
-
-    #response = requests.get(url, headers=headers, params=params)
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, params=params)
+    #response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        print('success')
-        print(response.json())
+        st.write(response.json())
         return response.json()
     else:
         st.error(f"Error fetching activities: {response.json()}")
