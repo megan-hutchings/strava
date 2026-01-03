@@ -46,7 +46,6 @@ def get_access_token(auth_code):
     else:
         return None
 
-
 def refresh_access_token(refresh_token):
     # Your Strava client credentials
     
@@ -75,7 +74,6 @@ def refresh_access_token(refresh_token):
         print(f"Error refreshing access token: {response.json()}")
         return None, None
 
-
 def check_token_scopes(ACCESS_TOKEN):
     url = 'https://www.strava.com/api/v3/athlete'
     headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
@@ -87,7 +85,6 @@ def check_token_scopes(ACCESS_TOKEN):
         print(f"whole response as: {response.json()}")
     else:
         print(f"Error verifying token: {response.json()}")
-
 
 # Function to get user activities
 def get_user_activities(user_id,ACCESS_TOKEN):
@@ -103,11 +100,10 @@ def get_user_activities(user_id,ACCESS_TOKEN):
         'per_page': 200  # Get up to 200 activities (you can adjust this as needed)
     }
     
-
     response = requests.get(url, headers=headers, params=params)
     #response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        st.write(response.json())
+        print(response.json())
         return response.json()
     else:
         st.error(f"Error fetching activities: {response.json()}")
