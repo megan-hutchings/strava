@@ -215,6 +215,15 @@ def show_login_page():
 
 # Redirect Page - Handles the redirection from Strava
 def handle_redirect_page():
+    st.session_state["current_user"] = st.secrets["CLIENT_ID"]
+
+    # Load existing tokens
+    st.session_state["tokens"] = load_tokens()
+
+
+
+
+
     # Extract the authorization code from the query parameters
 
     print(st.query_params)
@@ -231,10 +240,8 @@ def handle_redirect_page():
             st.write(f"Your access token: {access_token}") 
 
             # Add the new token to the dictionary
-            if "tokens" in st.session_state:
-                st.session_state.tokens[st.session_state.current_user] = access_token
-            else:
-                st.session_state["tokens"] = json({st.session_state.current_user: access_token})
+
+            st.session_state.tokens[st.session_state.current_user] = access_token
 
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
