@@ -272,10 +272,13 @@ def handle_redirect_page():
 def handle_leaderboard_page():
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
+    for user in st.session_state.tokens:
+        st.write(user)
 
 
-    st.title("Strava Leaderboard - Kilometers Run in Year") 
+    st.title("Strava Leaderboard - Kilometers Run in 2026") 
     leaderboard = {} 
+    """
     for user_name, user_id in users.items(): 
         activities = get_user_activities(user_id, access_token) 
         total_kms = calculate_total_kms(activities) 
@@ -286,6 +289,7 @@ def handle_leaderboard_page():
         st.subheader(f"Leaderboard for {datetime.now().year}") 
         for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1): 
             st.write(f"{rank}. {user} - {total_kms:.2f} km") 
+    """
 
 
 # Run the app
