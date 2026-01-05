@@ -208,12 +208,14 @@ def show_login_page():
 
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
+    st.write(st.session_state["tokens"])
 
     # Check if user is already in the tokens file
     if st.session_state.current_user in st.session_state.tokens:
         st.success(f"User {st.session_state.current_user} is already authenticated!")
 
         st.query_params["page"] = "leaderboard"
+        streamlit_js_eval(js_expressions="parent.window.location.reload()")
     else:
         st.write(f"User {st.session_state.current_user} is not found in tokens.")
         st.write(f"Adding user {st.session_state.current_user} with token.")
