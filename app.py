@@ -5,6 +5,7 @@ import numpy as np
 from urllib.parse import urlencode, urlparse, parse_qs
 from datetime import datetime
 import json
+from streamlit_js_eval import streamlit_js_eval
 # Replace these with your own values
 CLIENT_ID = st.secrets['CLIENT_ID']
 CLIENT_SECRET = st.secrets['CLIENT_SECRET']
@@ -264,6 +265,8 @@ def handle_redirect_page():
 
         
             st.query_params["page"] = "leaderboard"
+            streamlit_js_eval(js_expressions="parent.window.location.reload()")
+
         else: 
             st.error("Failed to obtain access token.")
     else:
