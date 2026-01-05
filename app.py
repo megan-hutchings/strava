@@ -2,26 +2,25 @@ import streamlit as st
 import requests
 import pandas as pd
 import numpy as np
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import urlencode
 from datetime import datetime, timedelta
 import json
 from streamlit_js_eval import streamlit_js_eval
-# Replace these with your own values
+
+
 CLIENT_ID = st.secrets['CLIENT_ID']
 CLIENT_SECRET = st.secrets['CLIENT_SECRET']
 REDIRECT_URI = 'https://hutchings.streamlit.app/?page=redirect'  # Redirect URI to capture the cod                # Define the users (replace with actual Strava user IDs)                    
+TOKENS_FILENAME = "tokens.json"
 
-tokens_file = "tokens.json"
-
+# handle stored tokens file
 def save_tokens(tokens):
-    with open(tokens_file, "w") as f:
+    with open(TOKENS_FILENAME, "w") as f:
         json.dump(tokens, f, indent=4)
-
 def load_tokens():
     try:
-        with open(tokens_file, "r") as f:
+        with open(TOKENS_FILENAME, "r") as f:
             tokens = json.load(f)
-        #st.write("found tokens file")
         return tokens
     except FileNotFoundError:
         st.error("no tokens file found")
@@ -55,27 +54,18 @@ def get_access_token(auth_code):
     else:
         return None
 
-
-
+# Refresh token
 def refresh_access_token(refresh_token):
-    # Your Strava client credentials
-    
-    # URL to exchange the refresh token for a new access token
     url = 'https://www.strava.com/oauth/token'
-    
-    # Payload for the refresh request
     payload = {
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET,
         'grant_type': 'refresh_token',
         'refresh_token': refresh_token,
     }
-    
-    # Make the request to refresh the access token
     response = requests.post(url, data=payload)
     
     if response.status_code == 200:
-        # Parse the response to get the new access token
         data = response.json()
         new_access_token = data['access_token']
         new_refresh_token = data.get('refresh_token', refresh_token)  # Keep the refresh token if provided
@@ -89,11 +79,9 @@ def get_user_info(client_id,access_token):
 
     url = "https://www.strava.com/api/v3/athlete"
     headers = {'Authorization': f'Bearer {access_token}'}
-
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
-        # Successfully fetched the user data
         user_data = response.json()
 
         return user_data  # Return the user_id
@@ -101,11 +89,9 @@ def get_user_info(client_id,access_token):
         st.warning("Access token expired. Refreshing...")
         new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[client_id]['refresh_token'])
         if new_access_token:
-            # Update the access token and refresh token
             st.session_state.tokens[client_id]['auth_token'] = new_access_token
             st.session_state.tokens[client_id]['refresh_token'] = new_refresh_token
             save_tokens(st.session_state.tokens)
-            # Retry the request with the new token
             return get_user_info(client_id, new_access_token)
         else:
             st.error("Unable to refresh access token.")
@@ -115,22 +101,25 @@ def get_user_info(client_id,access_token):
         return None
 
 # Function to get user activities
-def get_user_activities(user_id,ACCESS_TOKEN):
-    print("ACCESS_TOKEN",ACCESS_TOKEN)
-    #st.write(user_id)
-
+def get_user_activities(user_id,access_token):
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/activities'
-    headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
+    headers = {'Authorization': f'Bearer {access_token}'}
     tomorrow = datetime.now() + timedelta(days=1)
     
+    #params = {
+        #'before': int(datetime(tomorrow.year, tomorrow.month, tomorrow.day).timestamp()),  # Activities from this year
+        #'after': int(datetime(datetime.now().year - 1, 12, 31).timestamp()),  # Activities up to the start of this year
+        #'per_page': 200  # Get up to 200 activities (you can adjust this as needed)
+    #}
+
+    #2025
     params = {
-        'before': int(datetime(tomorrow.year, tomorrow.month, tomorrow.day).timestamp()),  # Activities from this year
-        'after': int(datetime(datetime.now().year - 1, 12, 31).timestamp()),  # Activities up to the start of this year
+        'before': int(datetime(2025, 12, 31).timestamp()),  # Activities from this year
+        'after': int(datetime(2024, 12, 31).timestamp()),  # Activities up to the start of this year
         'per_page': 200  # Get up to 200 activities (you can adjust this as needed)
     }
     
     response = requests.get(url, headers=headers, params=params)
-    #response = requests.get(url, headers=headers)
     if response.status_code == 200:
         print(response.json())
         return response.json()
