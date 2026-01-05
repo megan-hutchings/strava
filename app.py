@@ -51,9 +51,11 @@ def get_access_token(auth_code):
     }
     response = requests.post(token_url, params=params)
     if response.status_code == 200:
-        return response.json()['access_token']
+        return response.json()
     else:
         return None
+
+
 
 def refresh_access_token(refresh_token):
     # Your Strava client credentials
@@ -100,7 +102,6 @@ def get_user_info(access_token):
         st.error(f"Error fetching user data: {response.json()}")
         return None
 
-
 # Function to get user activities
 def get_user_activities(user_id,ACCESS_TOKEN):
     print("ACCESS_TOKEN",ACCESS_TOKEN)
@@ -121,6 +122,19 @@ def get_user_activities(user_id,ACCESS_TOKEN):
     if response.status_code == 200:
         print(response.json())
         return response.json()
+    elif response.status_code == 401:  # Token expired
+        st.warning("Access token expired. Refreshing...")
+        new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[user_id]['refresh_token'])
+        if new_access_token:
+            # Update the access token and refresh token
+            st.session_state.tokens[user_id]['auth_token'] = new_access_token
+            st.session_state.tokens[user_id]['refresh_token'] = new_refresh_token
+            save_tokens(st.session_state.tokens)
+            # Retry the request with the new token
+            return get_user_activities(user_id, new_access_token)
+        else:
+            st.error("Unable to refresh access token.")
+            return []
     else:
         st.error(f"Error fetching activities: {response.json()}")
         return []
@@ -206,7 +220,6 @@ def show_login_page():
         st.write(f"User {st.session_state.current_user} is not found in tokens.")
         st.write(f"Adding user {st.session_state.current_user} with token.")
         
-
         # Display the authorization button
         auth_url = generate_auth_url()
         st.write("Click the button below to authorize with Strava:")
@@ -231,9 +244,9 @@ def handle_redirect_page():
         #st.write(f"Authorization Code: {auth_code}")
 
         # Exchange the code for an access token
-        access_token = get_access_token(auth_code)
+        access_token_data = get_access_token(auth_code)
 
-        if access_token: 
+        if access_token_data: 
             st.success("Successfully authenticated with Strava!")
             #st.write(f"Your access token: {access_token}") 
             user_data = get_user_info(access_token)
@@ -241,8 +254,14 @@ def handle_redirect_page():
             #st.write(f"Your user_id: {user_id}")
 
             # Add the new token to the dictionary
-            st.session_state.tokens[st.session_state.current_user] = {"auth_token": access_token,"user_id": user_id,"firstname":user_data.get('firstname'),"lastname":user_data.get('lastname')}
-
+            #st.session_state.tokens[st.session_state.current_user] = {"auth_token": access_token,"user_id": user_id,"firstname":user_data.get('firstname'),"lastname":user_data.get('lastname')}
+            st.session_state.tokens[st.session_state.current_user] = {
+                "auth_token": access_token_data['access_token'],
+                "refresh_token": access_token_data['refresh_token'],
+                "user_id": user_id,
+                "firstname": user_data.get('firstname'),
+                "lastname": user_data.get('lastname')
+            }
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
 
@@ -285,4 +304,5 @@ def handle_leaderboard_page():
 # Run the app
 if __name__ == "__main__":
     app()
+
 
