@@ -27,7 +27,6 @@ Pint==0.25.2
 platformdirs==4.5.1
 protobuf==6.33.2
 pyarrow==22.0.0
-pycairo==1.28.0
 pycparser==2.22
 pydantic==2.12.5
 pydantic_core==2.41.5
@@ -45,9 +44,4 @@ streamlit==1.52.2
 streamlit-js-eval==0.1.7
 tenacity==9.1.2
 toml==0.10.2
-tornado==6.5.4
-typing-inspection==0.4.2
-typing_extensions==4.15.0
-tzdata==2025.3
-urllib3==2.6.2
-wheel==0.45.1
+
