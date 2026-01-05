@@ -83,7 +83,7 @@ def refresh_access_token(refresh_token):
         print(f"Error refreshing access token: {response.json()}")
         return None, None
 
-def get_user_id(access_token):
+def get_user_info(access_token):
 
     url = "https://www.strava.com/api/v3/athlete"
     headers = {'Authorization': f'Bearer {access_token}'}
@@ -93,8 +93,9 @@ def get_user_id(access_token):
     if response.status_code == 200:
         # Successfully fetched the user data
         user_data = response.json()
-        st.write(user_data)
-        return user_data.get('id')  # Return the user_id
+
+
+        return user_data  # Return the user_id
     else:
         st.error(f"Error fetching user data: {response.json()}")
         return None
@@ -234,13 +235,13 @@ def handle_redirect_page():
 
         if access_token: 
             st.success("Successfully authenticated with Strava!")
-            st.write(f"Your access token: {access_token}") 
-            user_id = get_user_id(access_token)
-            st.write(f"Your user_id: {user_id}")
+            #st.write(f"Your access token: {access_token}") 
+            user_data = get_user_info(access_token)
+            user_id =  user_data.get('id') 
+            #st.write(f"Your user_id: {user_id}")
 
             # Add the new token to the dictionary
-            st.write(st.session_state.current_user)
-            st.session_state.tokens[st.session_state.current_user] = {"auth_token": access_token,"user_id": user_id}
+            st.session_state.tokens[st.session_state.current_user] = {"auth_token": access_token,"user_id": user_id,"firstname":user_data.get('firstname'),"lastname":user_data.get('lastname')}
 
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
@@ -248,9 +249,8 @@ def handle_redirect_page():
             st.write("Updated tokens:")
             st.json(st.session_state.tokens)
 
-        
             st.query_params["page"] = "leaderboard"
-            #streamlit_js_eval(js_expressions="parent.window.location.reload()")
+            streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
         else: 
             st.error("Failed to obtain access token.")
@@ -274,7 +274,7 @@ def handle_leaderboard_page():
         activities = get_user_activities(user_id, access_token) 
         total_kms = calculate_total_kms(activities) 
 
-        leaderboard["meg"] = total_kms 
+        leaderboard[f"{data['firstname']} {data['lastname']}"] = total_kms 
         #  Sort leaderboard based on kilometers 
         sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
         # # Display the leaderboard 
@@ -298,5 +298,26 @@ if __name__ == "__main__":
 
 
 
-
+""" {
+"id":26785678
+"username":"meg_hutchings"
+"resource_state":2
+"firstname":"meg"
+"lastname":"hutchings"
+"bio":NULL
+"city":NULL
+"state":NULL
+"country":NULL
+"sex":NULL
+"premium":false
+"summit":false
+"created_at":"2017-12-22T17:58:21Z"
+"updated_at":"2025-06-18T19:19:10Z"
+"badge_type_id":0
+"weight":NULL
+"profile_medium":"https://lh3.googleusercontent.com/a/ACg8ocK6_nfF29aNXcFetBEfM8pwakFN-VmM2ouTwPAKYynOq_ebHQ=s96-c"
+"profile":"https://lh3.googleusercontent.com/a/ACg8ocK6_nfF29aNXcFetBEfM8pwakFN-VmM2ouTwPAKYynOq_ebHQ=s96-c"
+"friend":NULL
+"follower":NULL
+} """
 
