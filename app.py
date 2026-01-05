@@ -121,7 +121,7 @@ def get_user_activities(user_id,access_token,selected_year):
             'page': 1
         }
 
-        all_activities = []
+    all_activities = []
     
     while True:
         response = requests.get(url, headers=headers, params=params)
