@@ -276,18 +276,20 @@ def handle_leaderboard_page():
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
     st.write(st.session_state.tokens)
-    for user in st.session_state.tokens:
-        st.write(user.user_id)
-        st.write(user.auth_token)
-
 
     st.title("Strava Leaderboard - Kilometers Run in 2026") 
     leaderboard = {} 
+
+    for user, data in st.session_state["tokens"].items():
+        user_id = data['user_id']
+        access_token = data['auth_token']
+        st.write(data['user_id'])
+        st.write(data['auth_token'])
     
-    for user_name, user_id in users.items(): 
         activities = get_user_activities(user_id, access_token) 
         total_kms = calculate_total_kms(activities) 
-        leaderboard[user_name] = total_kms 
+
+        leaderboard["meg"] = total_kms 
         #  Sort leaderboard based on kilometers 
         sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
         # # Display the leaderboard 
