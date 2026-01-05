@@ -21,7 +21,7 @@ def load_tokens():
     try:
         with open(tokens_file, "r") as f:
             tokens = json.load(f)
-        st.write("found tokens file")
+        #st.write("found tokens file")
         return tokens
     except FileNotFoundError:
         st.error("no tokens file found")
@@ -104,7 +104,7 @@ def get_user_info(access_token):
 # Function to get user activities
 def get_user_activities(user_id,ACCESS_TOKEN):
     print("ACCESS_TOKEN",ACCESS_TOKEN)
-    st.write(user_id)
+    #st.write(user_id)
 
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/activities'
     headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
@@ -284,37 +284,4 @@ def handle_leaderboard_page():
 # Run the app
 if __name__ == "__main__":
     app()
-
-
-
-
-
-
-
-
-
-
-
-""" {
-"id":26785678
-"username":"meg_hutchings"
-"resource_state":2
-"firstname":"meg"
-"lastname":"hutchings"
-"bio":NULL
-"city":NULL
-"state":NULL
-"country":NULL
-"sex":NULL
-"premium":false
-"summit":false
-"created_at":"2017-12-22T17:58:21Z"
-"updated_at":"2025-06-18T19:19:10Z"
-"badge_type_id":0
-"weight":NULL
-"profile_medium":"https://lh3.googleusercontent.com/a/ACg8ocK6_nfF29aNXcFetBEfM8pwakFN-VmM2ouTwPAKYynOq_ebHQ=s96-c"
-"profile":"https://lh3.googleusercontent.com/a/ACg8ocK6_nfF29aNXcFetBEfM8pwakFN-VmM2ouTwPAKYynOq_ebHQ=s96-c"
-"friend":NULL
-"follower":NULL
-} """
 
