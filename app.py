@@ -51,7 +51,6 @@ def get_access_token(auth_code):
     }
     response = requests.post(token_url, params=params)
     if response.status_code == 200:
-        check_token_scopes(response.json()['access_token'])
         return response.json()['access_token']
     else:
         return None
