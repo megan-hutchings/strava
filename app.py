@@ -101,23 +101,23 @@ def get_user_info(client_id,access_token):
         return None
 
 # Function to get user activities
-def get_user_activities(user_id,access_token):
+def get_user_activities(user_id,access_token,selected_year):
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/activities'
     headers = {'Authorization': f'Bearer {access_token}'}
     tomorrow = datetime.now() + timedelta(days=1)
     
-    #params = {
-        #'before': int(datetime(tomorrow.year, tomorrow.month, tomorrow.day).timestamp()),  # Activities from this year
-        #'after': int(datetime(datetime.now().year - 1, 12, 31).timestamp()),  # Activities up to the start of this year
-        #'per_page': 200  # Get up to 200 activities (you can adjust this as needed)
-    #}
-
-    #2025
-    params = {
-        'before': int(datetime(2025, 12, 31).timestamp()),  # Activities from this year
-        'after': int(datetime(2024, 12, 31).timestamp()),  # Activities up to the start of this year
-        'per_page': 200  # Get up to 200 activities (you can adjust this as needed)
-    }
+    if selected_year == str(datetime.now().year):
+        params = {
+            'before': int(datetime(tomorrow.year, tomorrow.month, tomorrow.day).timestamp()),  # Activities from this year
+            'after': int(datetime(datetime.now().year - 1, 12, 31).timestamp()),  # Activities up to the start of this year
+            'per_page': 370  # Get up to 200 activities (you can adjust this as needed)
+        }
+    else:
+        params = {
+            'before': int(datetime(int(selected_year), 12, 31).timestamp()),  # Activities from this year
+            'after': int(datetime(int(selected_year)-1, 12, 31).timestamp()),  # Activities up to the start of this year
+            'per_page': 370  # Get up to 200 activities (you can adjust this as needed)
+        }
     
     response = requests.get(url, headers=headers, params=params)
     if response.status_code == 200:
@@ -153,26 +153,6 @@ def get_user_stats(user_id, access_token):
         print(f"Error fetching stats for user {user_id}: {response.json()}")
         return None
     
-def get_club_activities(club_id, ACCESS_TOKEN, before=None, after=None, per_page=30):
-    url = f'https://www.strava.com/api/v3/clubs/{club_id}/activities'
-    headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
-    
-    # Optional parameters: before, after, per_page
-    params = {
-        'before': before,
-        'after': after,
-        'per_page': per_page
-    }
-
-    response = requests.get(url, headers=headers, params=params)
-    
-    if response.status_code == 200:
-        activities = response.json()
-        print(f"Fetched {len(activities)} activities from club {club_id}.")
-        return activities
-    else:
-        print(f"Error fetching activities for club {club_id}: {response.json()}")
-        return []
 
 def calculate_total_kms(activities):
     total_kms = 0
@@ -278,7 +258,9 @@ def handle_redirect_page():
         st.warning("No authorization code found. Make sure to authorize first.")
 
 def handle_leaderboard_page():
-    st.title("Strava Leaderboard - Kilometers Run in 2026")
+    page_options = ["2026", "2025", "2024", "2023"]
+    selected_year = st.selectbox("Select a year", page_options)
+    st.title(f"Strava Leaderboard - Kilometers Run in {selected_year}")
     leaderboard = {} 
 
     # Load existing tokens
@@ -291,7 +273,7 @@ def handle_leaderboard_page():
         #st.write(data['user_id'])
         #st.write(data['auth_token'])
     
-        activities = get_user_activities(user_id, access_token) 
+        activities = get_user_activities(user_id, access_token,selected_year) 
         total_kms = calculate_total_kms(activities) 
 
         leaderboard[f"{data['firstname']} {data['lastname']}"] = total_kms 
