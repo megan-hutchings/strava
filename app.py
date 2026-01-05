@@ -187,23 +187,24 @@ def app():
 
 # Login Page - Generates the Strava Auth URL
 def show_login_page():
+    st.title('Login with Strava')
 
     st.session_state["current_user"] = st.secrets["CLIENT_ID"]
 
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
-    st.write(st.session_state["tokens"])
+    #st.write(st.session_state["tokens"])
 
     # Check if user is already in the tokens file
     if st.session_state.current_user in st.session_state.tokens:
         st.success(f"User {st.session_state.current_user} is already authenticated!")
-
         st.query_params["page"] = "leaderboard"
         streamlit_js_eval(js_expressions="parent.window.location.reload()")
     else:
+        
         st.write(f"User {st.session_state.current_user} is not found in tokens.")
         st.write(f"Adding user {st.session_state.current_user} with token.")
-        st.title('Login with Strava')
+        
 
         # Display the authorization button
         auth_url = generate_auth_url()
@@ -217,18 +218,16 @@ def show_login_page():
 
 # Redirect Page - Handles the redirection from Strava
 def handle_redirect_page():
+    st.title('Authorizing...')
     st.session_state["current_user"] = st.secrets["CLIENT_ID"]
 
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
 
     # Extract the authorization code from the query parameters
-
-    print(st.query_params)
     if 'code' in st.query_params:
         auth_code = st.query_params['code']
-
-        st.write(f"Authorization Code: {auth_code}")
+        #st.write(f"Authorization Code: {auth_code}")
 
         # Exchange the code for an access token
         access_token = get_access_token(auth_code)
@@ -246,8 +245,8 @@ def handle_redirect_page():
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
 
-            st.write("Updated tokens:")
-            st.json(st.session_state.tokens)
+            #st.write("Updated tokens:")
+            #st.json(st.session_state.tokens)
 
             st.query_params["page"] = "leaderboard"
             streamlit_js_eval(js_expressions="parent.window.location.reload()")
@@ -258,18 +257,18 @@ def handle_redirect_page():
         st.warning("No authorization code found. Make sure to authorize first.")
 
 def handle_leaderboard_page():
+    st.title("Strava Leaderboard - Kilometers Run in 2026")
+    leaderboard = {} 
+
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
-    st.write(st.session_state.tokens)
-
-    st.title("Strava Leaderboard - Kilometers Run in 2026") 
-    leaderboard = {} 
+    #st.write(st.session_state.tokens)
 
     for user, data in st.session_state["tokens"].items():
         user_id = data['user_id']
         access_token = data['auth_token']
-        st.write(data['user_id'])
-        st.write(data['auth_token'])
+        #st.write(data['user_id'])
+        #st.write(data['auth_token'])
     
         activities = get_user_activities(user_id, access_token) 
         total_kms = calculate_total_kms(activities) 
@@ -278,11 +277,9 @@ def handle_leaderboard_page():
         #  Sort leaderboard based on kilometers 
         sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
         # # Display the leaderboard 
-        st.subheader(f"Leaderboard for {datetime.now().year}") 
         for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1): 
             st.write(f"{rank}. {user} - {total_kms:.2f} km")
   
-
 
 # Run the app
 if __name__ == "__main__":
