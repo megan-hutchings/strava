@@ -85,7 +85,7 @@ def refresh_access_token(refresh_token):
         print(f"Error refreshing access token: {response.json()}")
         return None, None
 
-def get_user_info(access_token):
+def get_user_info(client_id,access_token):
 
     url = "https://www.strava.com/api/v3/athlete"
     headers = {'Authorization': f'Bearer {access_token}'}
@@ -96,8 +96,20 @@ def get_user_info(access_token):
         # Successfully fetched the user data
         user_data = response.json()
 
-
         return user_data  # Return the user_id
+    elif response.status_code == 401:  # Token expired
+        st.warning("Access token expired. Refreshing...")
+        new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[client_id]['refresh_token'])
+        if new_access_token:
+            # Update the access token and refresh token
+            st.session_state.tokens[client_id]['auth_token'] = new_access_token
+            st.session_state.tokens[client_id]['refresh_token'] = new_refresh_token
+            save_tokens(st.session_state.tokens)
+            # Retry the request with the new token
+            return get_user_info(client_id, new_access_token)
+        else:
+            st.error("Unable to refresh access token.")
+            return []
     else:
         st.error(f"Error fetching user data: {response.json()}")
         return None
@@ -249,7 +261,7 @@ def handle_redirect_page():
         if access_token_data: 
             st.success("Successfully authenticated with Strava!")
             #st.write(f"Your access token: {access_token}") 
-            user_data = get_user_info(access_token)
+            user_data = get_user_info(st.session_state.current_user,access_token_data['access_token'])
             user_id =  user_data.get('id') 
             #st.write(f"Your user_id: {user_id}")
 
