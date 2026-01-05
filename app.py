@@ -110,35 +110,56 @@ def get_user_activities(user_id,access_token,selected_year):
         params = {
             'before': int(datetime(tomorrow.year, tomorrow.month, tomorrow.day).timestamp()),  # Activities from this year
             'after': int(datetime(datetime.now().year - 1, 12, 31).timestamp()),  # Activities up to the start of this year
-            'per_page': 370  # Get up to 200 activities (you can adjust this as needed)
+            'per_page': 200, # Get up to 200 activities (you can adjust this as needed)
+            'page': 1
         }
     else:
         params = {
             'before': int(datetime(int(selected_year), 12, 31).timestamp()),  # Activities from this year
             'after': int(datetime(int(selected_year)-1, 12, 31).timestamp()),  # Activities up to the start of this year
-            'per_page': 370  # Get up to 200 activities (you can adjust this as needed)
+            'per_page': 200,  # Get up to 200 activities (you can adjust this as needed)
+            'page': 1
         }
+
+        all_activities = []
     
-    response = requests.get(url, headers=headers, params=params)
-    if response.status_code == 200:
-        print(response.json())
-        return response.json()
-    elif response.status_code == 401:  # Token expired
-        st.warning("Access token expired. Refreshing...")
-        new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[user_id]['refresh_token'])
-        if new_access_token:
-            # Update the access token and refresh token
-            st.session_state.tokens[user_id]['auth_token'] = new_access_token
-            st.session_state.tokens[user_id]['refresh_token'] = new_refresh_token
-            save_tokens(st.session_state.tokens)
-            # Retry the request with the new token
-            return get_user_activities(user_id, new_access_token)
+    while True:
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code == 200:
+            activities = response.json()
+            all_activities.extend(activities)
+            
+            # If there are fewer activities than 'per_page', stop pagination
+            if len(activities) < 200:
+                break
+            else:
+                # Otherwise, move to the next page
+                params['page'] += 1
+        elif response.status_code == 401:  # Token expired
+            st.warning("Access token expired. Refreshing...")
+            new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[user_id]['refresh_token'])
+            if new_access_token:
+                # Update the access token and refresh token
+                st.session_state.tokens[user_id]['auth_token'] = new_access_token
+                st.session_state.tokens[user_id]['refresh_token'] = new_refresh_token
+                save_tokens(st.session_state.tokens)
+                # Retry the request with the new token
+                return get_user_activities(user_id, new_access_token)
+            else:
+                st.error("Unable to refresh access token.")
+                return []
         else:
-            st.error("Unable to refresh access token.")
-            return []
-    else:
-        st.error(f"Error fetching activities: {response.json()}")
-        return []
+            st.error(f"Error fetching activities: {response.json()}")
+            break
+    
+    return all_activities
+
+
+
+
+
+
     
 def get_user_stats(user_id, access_token):
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/stats'
