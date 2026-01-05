@@ -17,11 +17,6 @@ def save_tokens(tokens):
     with open(tokens_file, "w") as f:
         json.dump(tokens, f, indent=4)
 
-users = {
-    'Meg': 26785678,  # Replace with real Strava athlete ID
-    'Dina': 67908097
-}
-
 def load_tokens():
     try:
         with open(tokens_file, "r") as f:
@@ -89,18 +84,6 @@ def refresh_access_token(refresh_token):
         print(f"Error refreshing access token: {response.json()}")
         return None, None
 
-def check_token_scopes(ACCESS_TOKEN):
-    url = 'https://www.strava.com/api/v3/athlete'
-    headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
-    
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        print(f"Authenticated as: {response.json()['username']}")
-        print(f"whole response as: {response.json()}")
-    else:
-        print(f"Error verifying token: {response.json()}")
-
 def get_user_id(access_token):
 
     url = "https://www.strava.com/api/v3/athlete"
@@ -111,6 +94,7 @@ def get_user_id(access_token):
     if response.status_code == 200:
         # Successfully fetched the user data
         user_data = response.json()
+        st.write(user_data)
         return user_data.get('id')  # Return the user_id
     else:
         st.error(f"Error fetching user data: {response.json()}")
@@ -267,7 +251,7 @@ def handle_redirect_page():
 
         
             st.query_params["page"] = "leaderboard"
-            streamlit_js_eval(js_expressions="parent.window.location.reload()")
+            #streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
         else: 
             st.error("Failed to obtain access token.")
