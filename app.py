@@ -274,7 +274,8 @@ def handle_leaderboard_page():
     st.session_state["tokens"] = load_tokens()
     st.write(st.session_state.tokens)
     for user in st.session_state.tokens:
-        st.write(user)
+        st.write(user.user_id)
+        st.write(user.auth_token)
 
 
     st.title("Strava Leaderboard - Kilometers Run in 2026") 
