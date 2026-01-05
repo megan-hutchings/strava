@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import numpy as np
 from urllib.parse import urlencode, urlparse, parse_qs
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from streamlit_js_eval import streamlit_js_eval
 # Replace these with your own values
@@ -108,9 +108,10 @@ def get_user_activities(user_id,ACCESS_TOKEN):
 
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/activities'
     headers = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
+    tomorrow = datetime.now() + timedelta(days=1)
     
     params = {
-        'before': int(datetime(datetime.now().year, datetime.now().month, datetime.now().day).timestamp()),  # Activities from this year
+        'before': int(datetime(tomorrow.year, tomorrow.month, tomorrow.day).timestamp()),  # Activities from this year
         'after': int(datetime(datetime.now().year - 1, 12, 31).timestamp()),  # Activities up to the start of this year
         'per_page': 200  # Get up to 200 activities (you can adjust this as needed)
     }
