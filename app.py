@@ -219,8 +219,8 @@ def show_login_page():
         streamlit_js_eval(js_expressions="parent.window.location.reload()")
     else:
         
-        st.write(f"User {st.session_state.current_user} is not found in tokens.")
-        st.write(f"Adding user {st.session_state.current_user} with token.")
+        #st.write(f"User {st.session_state.current_user} is not found in tokens.")
+        #st.write(f"Adding user {st.session_state.current_user} with token.")
         
         # Display the authorization button
         auth_url = generate_auth_url()
@@ -257,7 +257,7 @@ def handle_redirect_page():
 
             # Add the new token to the dictionary
             #st.session_state.tokens[st.session_state.current_user] = {"auth_token": access_token,"user_id": user_id,"firstname":user_data.get('firstname'),"lastname":user_data.get('lastname')}
-            st.session_state.tokens[st.session_state.current_user] = {
+            st.session_state.tokens[user_id] = {
                 "auth_token": access_token_data['access_token'],
                 "refresh_token": access_token_data['refresh_token'],
                 "user_id": user_id,
