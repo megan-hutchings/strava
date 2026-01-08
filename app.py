@@ -267,8 +267,8 @@ def handle_redirect_page():
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
 
-            #st.write("Updated tokens:")
-            #st.json(st.session_state.tokens)
+            st.write("Updated tokens:")
+            st.json(st.session_state.tokens)
 
             st.query_params["page"] = "leaderboard"
             streamlit_js_eval(js_expressions="parent.window.location.reload()")
