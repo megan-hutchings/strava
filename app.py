@@ -286,6 +286,8 @@ def handle_leaderboard_page():
 
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
+    st.write("Updated tokens:")
+    st.json(st.session_state.tokens)
     #st.write(st.session_state.tokens)
 
     for user, data in st.session_state["tokens"].items():
