@@ -286,11 +286,7 @@ def handle_leaderboard_page():
 
     # Load existing tokens
     st.session_state["tokens"] = load_tokens()
-    st.write("Updated tokens:")
-    st.json(st.session_state.tokens)
-    #st.write(st.session_state.tokens)
 
-    st.write(len(st.session_state["tokens"].items()))
     for user, data in st.session_state["tokens"].items():
         user_id = data['user_id']
         access_token = data['auth_token']
@@ -301,13 +297,13 @@ def handle_leaderboard_page():
         total_kms = calculate_total_kms(activities) 
 
         leaderboard[f"{data['firstname']} {data['lastname']}"] = total_kms 
-        st.write(leaderboard)
+
         #  Sort leaderboard based on kilometers 
-        sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
-        st.write(sorted_leaderboard)
-        # # Display the leaderboard 
-        for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1): 
-            st.write(f"{rank}. {user} - {total_kms:.2f} km")
+    sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True) 
+
+    # # Display the leaderboard 
+    for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1): 
+        st.write(f"{rank}. {user} - {total_kms:.2f} km")
   
 
 # Run the app
