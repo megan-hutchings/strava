@@ -58,8 +58,8 @@ def get_access_token(auth_code):
 def refresh_access_token(refresh_token):
     url = 'https://www.strava.com/oauth/token'
     payload = {
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET,
+        'client_id': st.secrets['CLIENT_ID'],
+        'client_secret': st.secrets['CLIENT_SECRET'],
         'grant_type': 'refresh_token',
         'refresh_token': refresh_token,
     }
@@ -279,6 +279,11 @@ def handle_redirect_page():
         st.warning("No authorization code found. Make sure to authorize first.")
 
 def handle_leaderboard_page():
+
+
+
+
+
     page_options = ["2026", "2025", "2024", "2023"]
     selected_year = st.selectbox("Select a year", page_options)
     st.title(f"Strava Leaderboard - Kilometers Run in {selected_year}")
@@ -291,7 +296,20 @@ def handle_leaderboard_page():
         user_id = data['user_id']
         access_token = data['auth_token']
         #st.write(data['user_id'])
-        #st.write(data['auth_token'])
+        #st.write(data['auth_token'])\
+
+        new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[user_id]['refresh_token'])
+        if new_access_token:
+            # Update the access token and refresh token
+            st.session_state.tokens[user_id]['auth_token'] = new_access_token
+            st.session_state.tokens[user_id]['refresh_token'] = new_refresh_token
+            save_tokens(st.session_state.tokens)
+
+
+
+
+
+
     
         activities = get_user_activities(user_id, access_token,selected_year) 
         total_kms = calculate_total_kms(activities) 
