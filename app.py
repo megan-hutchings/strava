@@ -54,7 +54,7 @@ def get_access_token(auth_code):
     else:
         return None
 
-# Refresh token
+""" # Refresh token
 def refresh_access_token(refresh_token):
     url = 'https://www.strava.com/oauth/token'
     payload = {
@@ -74,6 +74,40 @@ def refresh_access_token(refresh_token):
     else:
         print(f"Error refreshing access token: {response.json()}")
         return None, None
+ """
+def refresh_all_tokens():
+    st.session_state.tokens = load_tokens()
+    now = int(datetime.now().timestamp())
+    updated = False
+
+    for user_id, data in st.session_state.tokens.items():
+        # Refresh if expired or expiring soon
+        if data["expires_at"] <= now + 300:
+            response = requests.post(
+                "https://www.strava.com/oauth/token",
+                data={
+                    "client_id": CLIENT_ID,
+                    "client_secret": CLIENT_SECRET,
+                    "grant_type": "refresh_token",
+                    "refresh_token": data["refresh_token"],
+                },
+            )
+
+            if response.status_code == 200:
+                refreshed = response.json()
+                st.session_state.tokens[user_id]["auth_token"] = refreshed["access_token"]
+                st.session_state.tokens[user_id]["refresh_token"] = refreshed["refresh_token"]
+                st.session_state.tokens[user_id]["expires_at"] = refreshed["expires_at"]
+                updated = True
+            else:
+                print(f"Failed to refresh token for {user_id}: {response.text}")
+
+    if updated:
+        save_tokens(st.session_state.tokens)
+
+    return st.session_state.tokens
+
+
 
 def get_user_info(client_id,access_token):
 
@@ -87,15 +121,8 @@ def get_user_info(client_id,access_token):
         return user_data  # Return the user_id
     elif response.status_code == 401:  # Token expired
         st.warning("Access token expired. Refreshing...")
-        new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[client_id]['refresh_token'])
-        if new_access_token:
-            st.session_state.tokens[client_id]['auth_token'] = new_access_token
-            st.session_state.tokens[client_id]['refresh_token'] = new_refresh_token
-            save_tokens(st.session_state.tokens)
-            return get_user_info(client_id, new_access_token)
-        else:
-            st.error("Unable to refresh access token.")
-            return []
+        refresh_all_tokens()
+        return get_user_info(client_id, st.session_state.tokens[client_id]["auth_token"])
     else:
         st.error(f"Error fetching user data: {response.json()}")
         return None
@@ -154,11 +181,6 @@ def get_user_activities(user_id,access_token,selected_year):
             break
     
     return all_activities
-
-
-
-
-
 
     
 def get_user_stats(user_id, access_token):
@@ -262,7 +284,8 @@ def handle_redirect_page():
                 "refresh_token": access_token_data['refresh_token'],
                 "user_id": user_id,
                 "firstname": user_data.get('firstname'),
-                "lastname": user_data.get('lastname')
+                "lastname": user_data.get('lastname'),
+                "expires_at": user_data.get('expires_at')
             }
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
@@ -280,37 +303,26 @@ def handle_redirect_page():
 
 def handle_leaderboard_page():
 
-
-
-
-
     page_options = ["2026", "2025", "2024", "2023"]
     selected_year = st.selectbox("Select a year", page_options)
     st.title(f"Strava Leaderboard - Kilometers Run in {selected_year}")
     leaderboard = {} 
 
     # Load existing tokens
+    refresh_all_tokens()
     st.session_state["tokens"] = load_tokens()
 
     for user, data in st.session_state["tokens"].items():
         user_id = data['user_id']
         access_token = data['auth_token']
-        #st.write(data['user_id'])
-        #st.write(data['auth_token'])\
 
-        new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[user_id]['refresh_token'])
-        if new_access_token:
+        #new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[user_id]['refresh_token'])
+        #if new_access_token:
             # Update the access token and refresh token
-            st.session_state.tokens[user_id]['auth_token'] = new_access_token
-            st.session_state.tokens[user_id]['refresh_token'] = new_refresh_token
-            save_tokens(st.session_state.tokens)
+            #st.session_state.tokens[user_id]['auth_token'] = new_access_token
+            #st.session_state.tokens[user_id]['refresh_token'] = new_refresh_token
+            #save_tokens(st.session_state.tokens)
 
-
-
-
-
-
-    
         activities = get_user_activities(user_id, access_token,selected_year) 
         total_kms = calculate_total_kms(activities) 
 
