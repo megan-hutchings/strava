@@ -54,27 +54,7 @@ def get_access_token(auth_code):
     else:
         return None
 
-""" # Refresh token
-def refresh_access_token(refresh_token):
-    url = 'https://www.strava.com/oauth/token'
-    payload = {
-        'client_id': st.secrets['CLIENT_ID'],
-        'client_secret': st.secrets['CLIENT_SECRET'],
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token,
-    }
-    response = requests.post(url, data=payload)
-    
-    if response.status_code == 200:
-        data = response.json()
-        new_access_token = data['access_token']
-        new_refresh_token = data.get('refresh_token', refresh_token)  # Keep the refresh token if provided
-        
-        return new_access_token, new_refresh_token
-    else:
-        print(f"Error refreshing access token: {response.json()}")
-        return None, None
- """
+
 def refresh_all_tokens():
     st.session_state.tokens = load_tokens()
     now = int(datetime.now().timestamp())
@@ -285,7 +265,7 @@ def handle_redirect_page():
                 "user_id": user_id,
                 "firstname": user_data.get('firstname'),
                 "lastname": user_data.get('lastname'),
-                "expires_at": user_data.get('expires_at')
+                "expires_at": access_token_data['expires_at']
             }
             # Save the updated tokens to the file
             save_tokens(st.session_state.tokens)
