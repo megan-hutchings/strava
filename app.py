@@ -5,7 +5,7 @@ import numpy as np
 from urllib.parse import urlencode
 from datetime import datetime, timedelta
 import json
-from streamlit_js_eval import streamlit_js_eval
+
 
 
 CLIENT_ID = st.secrets['CLIENT_ID']
@@ -54,7 +54,6 @@ def get_access_token(auth_code):
     else:
         return None
 
-
 def refresh_all_tokens():
     st.session_state.tokens = load_tokens()
     now = int(datetime.now().timestamp())
@@ -86,8 +85,6 @@ def refresh_all_tokens():
         save_tokens(st.session_state.tokens)
 
     return st.session_state.tokens
-
-
 
 def get_user_info(client_id,access_token):
 
@@ -162,7 +159,6 @@ def get_user_activities(user_id,access_token,selected_year):
     
     return all_activities
 
-    
 def get_user_stats(user_id, access_token):
     url = f'https://www.strava.com/api/v3/athletes/{user_id}/stats'
     headers = {'Authorization': f'Bearer {access_token}'}
@@ -176,7 +172,6 @@ def get_user_stats(user_id, access_token):
         print(f"Error fetching stats for user {user_id}: {response.json()}")
         return None
     
-
 def calculate_total_kms(activities):
     total_kms = 0
     for activity in activities:
@@ -190,7 +185,6 @@ def display_leaderboard(leaderboard):
     for rank, (user, total_kms) in enumerate(sorted_leaderboard, start=1):
         st.write(f"{rank}. {user} - {total_kms:.2f} km")
 
-
 # Main function for the Streamlit app
 def app():
     if "page" in st.query_params:
@@ -202,7 +196,6 @@ def app():
             handle_leaderboard_page()
     else:
         show_login_page()
-
 
 # Login Page - Generates the Strava Auth URL
 def show_login_page():
@@ -218,7 +211,7 @@ def show_login_page():
     if st.session_state.current_user in st.session_state.tokens:
         st.success(f"User {st.session_state.current_user} is already authenticated!")
         st.query_params["page"] = "leaderboard"
-        streamlit_js_eval(js_expressions="parent.window.location.reload()")
+        st.rerun()
     else:
         
         #st.write(f"User {st.session_state.current_user} is not found in tokens.")
@@ -230,9 +223,6 @@ def show_login_page():
         st.markdown(f"[Authorize with Strava]({auth_url})")
 
         st.info("After you authorize, you'll be redirected to this app with the authorization code.")
-
-
-
 
 # Redirect Page - Handles the redirection from Strava
 def handle_redirect_page():
@@ -274,7 +264,8 @@ def handle_redirect_page():
             #st.json(st.session_state.tokens)
 
             st.query_params["page"] = "leaderboard"
-            streamlit_js_eval(js_expressions="parent.window.location.reload()")
+            st.rerun()
+
 
         else: 
             st.error("Failed to obtain access token.")
@@ -295,14 +286,6 @@ def handle_leaderboard_page():
     for user, data in st.session_state["tokens"].items():
         user_id = data['user_id']
         access_token = data['auth_token']
-
-        #new_access_token, new_refresh_token = refresh_access_token(st.session_state.tokens[user_id]['refresh_token'])
-        #if new_access_token:
-            # Update the access token and refresh token
-            #st.session_state.tokens[user_id]['auth_token'] = new_access_token
-            #st.session_state.tokens[user_id]['refresh_token'] = new_refresh_token
-            #save_tokens(st.session_state.tokens)
-
         activities = get_user_activities(user_id, access_token,selected_year) 
         total_kms = calculate_total_kms(activities) 
 
